@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier List</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Additional custom CSS */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            background-color: #ffffff;
+            border-collapse: collapse;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #e0e0e0;
+        }
+
+        tr:hover {
+            background-color: #d3d3d3;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .container {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <b><h1>List Of All Supplier</h1></b>
+        <div><a href="{% url 'home_page' %}">Home</a></div>
+        <hr>
+    </div>
+    
+    <div class="container">
+        <a href="/inventory/supplier/save" class="btn btn-primary" >Add Supplier</a> 
+        <hr>
+    </div>
+    <div class="container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Supplier ID</th>
+                    <th>Supplier Name</th>
+                    <th>Mobile No</th>
+                    <th>Address</th>
+                    <th>Created On</th>
+                    <th>Status</th>
+                    <th>Delete</th>
+                    <th>Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in supplierList %}
+                <tr>
+                    <td>{{ supplier.id }}</td> 
+                    <td>{{ supplier.supplier_name }}</td>
+                    <td>{{ supplier.mobile_no }}</td>
+                    <td>{{ supplier.address }}</td>
+                    <td>{{ supplier.datetime }}</td>
+                    <td>{{ supplier.status }}</td>
+                    <td><a href="/inventory/supplier/delete/{{supplier.id}}" class="btn btn-danger">Delete</a></td>
+                    <td><a href="/inventory/supplier/update/{{supplier.id}}" class="btn btn-success">Update</a></td> 
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+</body>
+</html>

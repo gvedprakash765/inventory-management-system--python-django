@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Purchase Details</title>
+</head>
+
+<body>
+    <h1>Purchase Details</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Total Amount</th>
+                <th>Invoice Date</th>
+                <th>Invoice Number</th>
+                <th>Supplier Name</th>
+                <th>Mobile Number</th>
+                <th>Address</th>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            {% for purchase_detail in purchase_details %}
+            <tr>
+                <td>{{ purchase_detail.0 }}</td>
+                <td>{{ purchase_detail.1 }}</td>
+                <td>{{ purchase_detail.2 }}</td>
+                <td>{{ purchase_detail.3 }}</td>
+                <td>{{ purchase_detail.4 }}</td>
+                <td>{{ purchase_detail.5 }}</td>
+                <td>{{ purchase_detail.6 }}</td>
+                <td>{{ purchase_detail.7 }}</td>
+                <td>{{ purchase_detail.8 }}</td>
+                <td>{{ purchase_detail.9 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+
+</html>
