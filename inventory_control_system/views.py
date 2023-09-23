@@ -121,8 +121,9 @@ def generate_invoice_sale():
 # fetch particular item price
 def get_item_price(request):
     item_id_str = request.GET.get('item')#converting str to int type
+    print(item_id_str)
     item_id=int(item_id_str)
-    # print(type(item_id))
+    print(type(item_id))
     try:
         item = ItemMaster.objects.get(id=item_id)
         price = item.price
@@ -160,10 +161,11 @@ def get_item_details(request):
             
             total_quantity=total_purchase_quantity-total_sale_quantity
             print(total_quantity)
+            sale_price=price+2000
 
             # Construct a JSON response with the item details
             data = {
-                'price': price + 2000,
+                'price': sale_price,
                 'quantity': total_quantity,
             }
 

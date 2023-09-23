@@ -1,7 +1,6 @@
-
 <!DOCTYPE html>
 <html>
-
+<!-- purchase items form with out remove buttoms -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,7 +78,6 @@
                         <th>Price</th>
                         <th>Quantity</th>
                         <th>Amount</th>
-                        <th>Action</th> <!-- Add a column for the "Remove" button -->
                     </tr>
                 </thead>
                 <tbody id="item-list"></tbody>
@@ -87,7 +85,7 @@
         </div>
     </div>
 
-    <!-- JavaScript to handle price and amount calculation, and item removal -->
+    <!-- JavaScript to handle price and amount calculation -->
     <script>
         $(document).ready(function () {
             var itemList = []; // Store added items and their details
@@ -101,12 +99,13 @@
 
                 // Make an AJAX request to fetch the price based on the selected item
                 $.ajax({
-                    url: '/inventory/get_item_price/', // This is the URL of the get_item_price function in views
+                    url: '/inventory/get_item_price/', //this is the url of get_item_price function is views
                     type: 'GET',
                     data: { item: selectedItem },
                     success: function (data) {
                         // Update the price field with the fetched price
                         priceField.val(data.price);
+
 
                         // Calculate the amount based on the price and quantity
                         var price = parseFloat(data.price);
@@ -119,32 +118,6 @@
                 });
             }
 
-            // Function to remove an item from the list
-            function removeItem(index) {
-                // Remove the item from the itemList array
-                var removedItem = itemList.splice(index, 1)[0];
-
-                // Remove the corresponding table row from the item list
-                $("#item-list tr").eq(index).remove();
-
-                // Calculate the total amount after removing the item
-                var totalAmount = itemList.reduce(function (sum, item) {
-                    return sum + parseFloat(item.amount);
-                }, 0);
-
-                // Update the total amount field
-                $("#total_amount").val(totalAmount.toFixed(2));
-
-                // Update the hidden input field with the updated itemList JSON data
-                $("#item_list_input").val(JSON.stringify(itemList));
-            }
-
-            // Add "Remove" button click event for dynamically created rows
-            $("#item-list").on('click', 'button.remove-item', function () {
-                var index = $(this).closest('tr').index();
-                removeItem(index);
-            });
-
             // Add Item button click event
             $("#add-item").on('click', function () {
                 var selectedItem = $("#id_item").val(); // Get the selected item's ID
@@ -153,14 +126,13 @@
                 var quantity = $("#quantity").val();
                 var amount = $("#amount").val();
 
-                // Create a table row with item details and a "Remove" button
+                // Create a table row with item details
                 var tableRow = `
                     <tr>
                         <td>${item}</td>
                         <td>${price}</td>
                         <td>${quantity}</td>
                         <td>${amount}</td>
-                        <td><button type="button" class="btn btn-danger remove-item">Remove</button></td>
                     </tr>
                 `;
                 $("#item_list_input").val(JSON.stringify(itemList));
@@ -189,9 +161,6 @@
                 $("#quantity").val(""); // Clear quantity
                 $("#amount").val(""); // Clear amount
                 $("#price").val("");
-
-                // Update the hidden input field with the updated itemList JSON data
-                $("#item_list_input").val(JSON.stringify(itemList));
             });
 
             // Call the function when the item or quantity changes
@@ -199,8 +168,15 @@
 
             // Initialize the price and amount on page load
             updatePriceAndAmount();
+
+            // Add this part for updating the hidden input field
+            $("#add-item").on('click', function () {
+                // After adding the item, update the hidden input field with the itemList JSON data
+                $("#item_list_input").val(JSON.stringify(itemList));
+            });
         });
     </script>
+
 </body>
 
 </html>
