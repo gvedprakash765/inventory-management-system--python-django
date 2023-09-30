@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'inventory_management_system.wsgi.application'
 DATABASES = {
     'default': {
        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'db_inventory_management_system',     # Replace with your PostgreSQL database name
+        'NAME': 'db_inv_control_sys',     # Replace with your PostgreSQL database name
         'USER': 'postgres',     # Replace with your PostgreSQL database username
         'PASSWORD': '12345',  # Replace with your PostgreSQL database password
         'HOST': 'localhost',      # Replace with the database host (default is 'localhost')

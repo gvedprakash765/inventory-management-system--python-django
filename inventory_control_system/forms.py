@@ -17,10 +17,10 @@ class PurchaseMasterForm(forms.ModelForm):
     forms.ModelChoiceField(queryset=Supplier.objects.all(), empty_label='Select Supplier')
     class Meta:
         model=PurchaseMaster
-        fields=['supplier','total_amount']
+        fields=['supplier','invoice_no','invoice_date','total_amount']
    
 class PurchaseDetailForm(forms.ModelForm):
-    forms.ModelChoiceField(queryset=ItemMaster.objects.all(), empty_label="Select Items")
+    forms.ModelChoiceField(queryset=ItemMaster.objects.all(),empty_label='select item')
 
     class Meta:
         model=PurchaseDetail
@@ -29,26 +29,11 @@ class PurchaseDetailForm(forms.ModelForm):
 class SaleMasterForm(forms.ModelForm):
     class Meta:
         model=SaleMaster
-        fields=['customer_name','number','total_amount']
+        fields=['customer_name','number','invoice_date','total_amount']
 
 class SaleDetailsForm(forms.ModelForm):
-    forms.ModelChoiceField(queryset=ItemMaster.objects.all(), empty_label="Select Items")
+    forms.ModelChoiceField(queryset=ItemMaster.objects.all(), empty_label='Select Item')
     class Meta:
         model=SaleDetails
         fields=['item','qty','price','amount']
 
-
-
-
-
-
-
-
-
-
-# class PurchaseMasterForm(forms.ModelForm):
-#     supplier = forms.ModelChoiceField(queryset=Supplier.objects.all(), empty_label="Select Supplier")
-
-#     class Meta:
-#         model = PurchaseMaster
-#         fields = ['supplier', 'other_fields'] 

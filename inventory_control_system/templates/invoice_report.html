@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Report</title>
+    <!-- Include Bootstrap CSS or other styling if desired -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add custom CSS styles here if needed */
+    </style>
+</head>
+<body>
+    {% include 'home.html' %}
+    <div class="container">
+        <h1 class="mt-4" style="text-align: center;">Date Wise Sale/Purchase Report</h1>
+        <table class="table table-bordered mt-4">
+            <thead>
+                <tr>
+                    <th>Transaction Date</th>
+                    <th>Sale Amount</th>
+                    <th>Purchase Amount</th>
+                    <th>Profit/Loss</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data %}
+                <tr>
+                    <td>{{ row.0 }}</td>
+                    <td>{{ row.1 }}</td>
+                    <td>{{ row.2 }}</td>
+                    <td>{{ row.3 }}</td>
+                </tr>
+                {% endfor %}
+                <!-- Display the grand total row -->
+                <tr>
+                    <td><b>Grand Total</b></td>
+                    <td><b>{{ sum_sale_amount }}</b></td>
+                    <td><b>{{ sum_purchase_amount }}</b></td>
+                    <td><b>{{ sum_profit_loss }}</b></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

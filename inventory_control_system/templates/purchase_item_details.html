@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Purchase Details</title>
+    <!-- Add Bootstrap CSS link -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Add custom CSS styles here */
+        .container {
+            margin-top: 20px;
+        }
+
+        .total-amount-box {
+            margin-top: 20px; /* Add margin-top to push the box below the table */
+            border: 1px solid #000;
+            padding: 5px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'home.html' %}
+    <div class="container">
+        <h1>Purchase Details</h1>
+
+        <!-- Display supplier name, invoice number, and invoice date -->
+        <div class="mb-3">
+            <strong>Supplier Name:</strong> {{ item_details.0.2 }}
+        </div>
+        <div class="mb-3">
+            <strong>Invoice Number:</strong> {{ item_details.0.0 }}
+        </div>
+        <div class="mb-3">
+            <strong>Invoice Date:</strong> {{ item_details.0.1 }}
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in item_details %}
+                <tr>
+                    <td>{{ detail.3 }}</td>
+                    <td>{{ detail.4 }}</td>
+                    <td>{{ detail.5 }}</td>
+                    <td>{{ detail.6 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Display total amount box at the bottom -->
+    <div class="container total-amount-box">
+        <strong>Total Amount:</strong> {{ total_amount }}
+    </div>
+</body>
+
+</html>

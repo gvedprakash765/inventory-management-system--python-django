@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Item Summary</title>
+</head>
+<body>
+    <h1>Item Summary</h1>
+
+    <form id="itemSelectionForm" method="get">
+        <label for="itemSelect">Select Item:</label>
+        <select id="itemSelect" name="item_name">
+            <option value="">All</option>
+            {% for item in items_data %}
+                <option value="{{ item.0 }}">{{ item.0 }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if selected_item %}
+        <h2>Item Detail for {{ selected_item }}</h2>
+        <h3>Purchase Quantity: {{ purchase_quantity }}</h3>
+        <h3>Sale Quantity: {{ sale_quantity }}</h3>
+        <h3>Stock Quantity: {{ stock_quantity }}</h3>
+    {% else %}
+        <h2>Item Summary</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Purchase Quantity</th>
+                    <th>Sale Quantity</th>
+                    <th>Stock Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items_data %}
+                    <tr>
+                        <td><a href="{% url 'item_summary' item.0 %}">{{ item.0 }}</a></td>
+                        <td>{{ item.1 }}</td>
+                        <td>{{ sale_data.get(item.0, 0) }}</td>
+                        <td>{{ stock_data.get(item.0, 0) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <script>
+        document.getElementById('itemSelect').addEventListener('change', function() {
+            const selectedItem = this.value;
+            if (selectedItem === '') {
+                window.location.href = '/item-summary/';
+            } else {
+                window.location.href = `/item-summary/${selectedItem}/`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -32,7 +32,7 @@ class Supplier(models.Model):
 
 class PurchaseMaster(models.Model):
     invoice_no = models.CharField(max_length=50, unique=True)
-    invoice_date = models.DateField(auto_now=True)
+    invoice_date = models.DateField()
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     datetime = models.DateTimeField(auto_now_add=True)
@@ -66,7 +66,7 @@ class SaleMaster(models.Model):
     customer_name = models.CharField(max_length=255)
     number = models.CharField(max_length=10)
     invoice_no = models.CharField(max_length=20, unique=True)
-    invoice_date = models.DateField(auto_now=True)
+    invoice_date = models.DateField()
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     datetime = models.DateTimeField(auto_now_add=True)
     status = models.IntegerField(default=1)

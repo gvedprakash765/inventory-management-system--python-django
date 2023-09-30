@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Item Stock Report</title>
+    <!-- Include Bootstrap CSS or other styling if desired -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add custom CSS styles here if needed */
+    </style>
+</head>
+<body>
+    {% include 'home.html' %}
+    <div class="container">
+        <h1 class="mt-4" style="text-align: center;">All Items Stock Report</h1>
+        <table class="table table-bordered mt-4">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Purchase Quantity</th>
+                    <th>Sale Quantity</th>
+                    <th>Stock</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stock_data %}
+                <tr>
+                    <td>{{ item.0 }}</td>
+                    <td>{{ item.1 }}</td>
+                    <td>{{ item.2 }}</td>
+                    <td>{{ item.3 }}</td>
+                    <td><a href="{% url 'item_stock_report'%}">Back</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

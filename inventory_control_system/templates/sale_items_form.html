@@ -12,22 +12,38 @@
 </head>
 
 <body>
+    {% include 'home.html' %}
     <div class="container mt-1">
         <h1 class="text-center">Sale Items</h1>
-        <div><a href="{% url 'home_page' %}">Home</a></div>
+
         <hr>
-        
-
-        <form method="post">
+        <form action="/inventory/sale-items/" method="POST">
             {% csrf_token %}
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label for="{{ form.customer_name.id_for_label }}" class="form-label">Customer Name:</label>
+                    {{ form1.customer_name }}
+                </div>
+                <div class="col-md-3">
+                    <label for="{{ form.number.id_for_label }}" class="form-label">Mobile Number:</label>
+                    {{ form1.number }}
+                </div>
+                <div class="col-md-3">
+                    <label for="invoice_date" class="form-label">Invoice Date:</label>
+                    <input type="date" id="invoice_date" name="invoice_date" class="form-control" value="YYYY-MM-DD">
+                </div>
+                <input type="hidden" id="item_list_input" name="item_list" value="">
+                <div class="col-md-3">
+                    <input type="hidden" id="total_amount" name="total_amount">
+                </div>
+            </div>
 
-            <!-- Form 1 with Bootstrap styling -->
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label for="{{ form1.item.id_for_label }}" class="form-label">Item :</label>
                     {{ form.item }}
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="price" class="form-label">Price:</label>
                     <input type="text" id="price" name="price" class="form-control" readonly>
                 </div>
@@ -40,41 +56,16 @@
                     <input type="text" id="amount" name="amount" class="form-control" readonly>
                 </div>
                 <div class="col-md-2">
-                    <button type="button" class="btn btn-primary mt-4" id="add-item">Add Item</button>
+                    <button type="button" class="btn btn-primary mt-4" id="add-item">Add Item to cart</button>
                 </div>
-            </div>
-        </form>
-
-        <hr> <!-- Add a separator between the two forms -->
-
-        <!-- Form 2 for displaying item list and total amount -->
-        <form action="/inventory/sale-items/" method="POST">
-            {% csrf_token %}
-            <div class="row mb-6">
-                <div class="col-md-2">
-                    <label for="{{ form.customer_name.id_for_label }}" class="form-label">Customer Name:</label>
-                    {{ form1.customer_name }}
-                </div>
-                <div class="col-md-2">
-                    <label for="{{ form.number.id_for_label }}" class="form-label">Mobile Number:</label>
-                    {{ form1.number }}
-                </div>
-
-                <!-- Hidden input fields to store item list data -->
-                <input type="hidden" id="item_list_input" name="item_list" value="">
-                <!-- Other form fields -->
-
-                <!-- Display the total amount -->
-                <div class="col-md-2">
-                    <label for="total_amount" class="form-label">Total Amount:</label>
-                    <input type="text" id="total_amount" name="total_amount" class="form-control" readonly>
-                </div>
-                <button type="submit" class="btn btn-success">Submit</button>
             </div>
         </form>
         <hr>
+
+        <hr> <!-- Add a separator between the two forms -->
+
         <div class="mb-3">
-            <h2>Added Items:</h2>
+            <h2>Cart Items:</h2>
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -89,6 +80,18 @@
         </div>
         <input type="hidden" id="qty" value="100"> <!-- Replace with the actual purchase quantity -->
     </div>
+
+    <div class="col-md-10 text-right">
+        <b><label for="total_cart_amount" class="form-label">Total Cart Amount:</label></b>
+       <b><span id="total_cart_amount">0.00</span></b>
+    </div>
+
+    <!-- Submit Cart Button -->
+    <div id="submit-cart-button" class="text-center">
+        <button type="button" class="btn btn-primary" id="submit-cart">Place Order</button>
+    </div>
+</div>
+
     <!-- JavaScript to handle price, amount, and purchase quantity calculation -->
     <script>
         $(document).ready(function () {
@@ -123,13 +126,13 @@
                 });
             }
 
-            // Function to show a message
-            function showMessage(message) {
-                $("#message").text(message).show();
-                setTimeout(function () {
-                    $("#message").fadeOut('slow');
-                }, 3000); // Hide the message after 3 seconds
-            }
+            // // Function to show a message
+            // function showMessage(message) {
+            //     $("#message").text(message).show();
+            //     setTimeout(function () {
+            //         $("#message").fadeOut('slow');
+            //     }, 3000); // Hide the message after 3 seconds
+            // }
 
             // Add Item button click event for the first form
             $("#add-item").on('click', function () {
@@ -139,22 +142,22 @@
                 var quantity = $("#quantity").val();
                 var amount = $("#amount").val();
 
-                // Check if the selected quantity is valid (e.g., non-empty)
-                if (quantity.trim() === "") {
-                    showMessage("Please enter a valid quantity.");
+                // Check if the selected quantity and selected item is valid
+                if (selectedItem.trim() === "") {
+                    alert("please select the item")
                     return;
                 }
-
-                // You should fetch the purchase details for the selected item here
-                // and compare it with the selected quantity to check if it's sufficient.
-                // I'll provide a simplified example assuming you have purchase details data.
+                if (quantity.trim() === "" || parseFloat(quantity) <= 0) {
+                    alert("Quantity must be greater than 0");
+                    return;
+                }
 
                 var purchaseQuantity = parseInt($("#qty").val()); // Get the available quantity
 
                 // Check if the selected quantity is less than or equal to the purchase quantity
                 if (parseInt(quantity) <= purchaseQuantity) {
                     // Create a table row with item details
-                    var tableRow = `
+                    var tableRow = `purchaseQuantity
                         <tr>
                             <td>${item}</td>
                             <td>${price}</td>
@@ -182,6 +185,7 @@
 
                     // Display the total amount
                     $("#total_amount").val(totalAmount.toFixed(2));
+                    $("#total_cart_amount").text(totalAmount.toFixed(2));
 
                     // Clear the form fields
                     $("#id_item").val(""); // Clear selected item
@@ -190,7 +194,8 @@
                     $("#price").val("");
                 } else {
                     // Display a message indicating insufficient quantity
-                    alert("Insufficient quantity in purchase details for the selected item.");
+                    alert("Insufficient quantity for the selected item and stocked qty is : " + purchaseQuantity);
+                
                 }
             });
 
@@ -204,6 +209,20 @@
             $("#add-item").on('click', function () {
                 // After adding the item, update the hidden input field with the itemList JSON data
                 $("#item_list_input").val(JSON.stringify(itemList));
+            });
+            $("#add-item").on('click', function () {
+                // After adding the item, update the hidden input field with the itemList JSON data
+                $("#item_list_input").val(JSON.stringify(itemList));
+            });
+
+            // Add event listener to the "Submit Cart" button to submit the form
+            $("#submit-cart").on('click', function () {
+                
+                // Update the hidden fields with cart data here if needed
+                // For example, you can update the item_list_input and total_amount fields
+
+                // Submit the form
+                $("form:first").submit();
             });
         });
     </script>

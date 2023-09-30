@@ -1,7 +1,7 @@
-import datetime
+
 from decimal import Decimal
 import json
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import *
 from .forms import * 
 from .models import *
@@ -87,21 +87,6 @@ def save_update_delete_supplier(request, action, supplier_id=None):
     return render(request, 'supplier_form.html', {'form': form, 'action': action})
 # end of Supplier curd operations
 
-# To auto generate invoice number for purchase
-def generate_invoice_number():
-    prefix = "SSPL-PURCHASE"  # Replace with your desired prefix
-    last_invoice = PurchaseMaster.objects.filter(
-        invoice_no__startswith=f"{prefix}-"
-    ).order_by('-invoice_no').first()
-
-    if last_invoice is None:
-        return f"{prefix}-001"
-
-    last_invoice_number = int(last_invoice.invoice_no.split('-')[2])
-    next_invoice_number = last_invoice_number + 1
-
-    return f"{prefix}-{next_invoice_number:03d}"
-# lst of auto generate invoice number
 
 # To auto generate invoice number for sale
 def generate_invoice_sale():
@@ -162,6 +147,7 @@ def get_item_details(request):
             total_quantity=total_purchase_quantity-total_sale_quantity
             print(total_quantity)
             sale_price=price+2000
+            print(sale_price)
 
             # Construct a JSON response with the item details
             data = {
@@ -181,10 +167,12 @@ def purchase_items(request):
         form = PurchaseMasterForm(request.POST)
         if form.is_valid():
             # Generate invoice number
-            invoice_no = generate_invoice_number()
+            print(request.POST)
+            invoice_no = request.POST['invoice_no'] 
+            invoice_date = request.POST['invoice_date'] 
 
             # Get supplier and total amount from the form
-            supplier_id = request.POST['supplier']
+            supplier_id = request.POST['supplier'] 
             # print(supplier_id)
             total_amount = request.POST['total_amount']
 
@@ -192,6 +180,7 @@ def purchase_items(request):
                 # save data PurchaseMaster db
                 purchase_master = PurchaseMaster.objects.create(
                     invoice_no=invoice_no,
+                    invoice_date=invoice_date,
                     total_amount=total_amount,
                     supplier=Supplier.objects.get(id=supplier_id)
                 )
@@ -247,17 +236,14 @@ def sale_items(request):
         print(request.POST)
         form = SaleDetailsForm(request.POST)
         form1 = SaleMasterForm(request.POST)
-        print('hello')
-
         if form1.is_valid():
-            print('is valid')
-            # customer_name = request.POST['customer_name']
-            # number = request.POST['number']
-            # total_amount = request.POST['total_amount']
-            print('save')
+            invoice_no=generate_invoice_sale()
+            invoice_date= request.POST['invoice_date']
+            
 
             saleMaster = SaleMaster.objects.create(
-                invoice_no=generate_invoice_sale(),
+                invoice_no=invoice_no,
+                invoice_date=invoice_date,
                 customer_name=request.POST['customer_name'],
                 number=request.POST['number'],
                 total_amount=request.POST['total_amount'],
@@ -280,7 +266,29 @@ def sale_items(request):
                     amount=amount,
                     sale_mstr=saleMaster
                 )
-
+            invoice_no
+            sale_details="""
+                            SELECT 
+                    sm.total_amount AS total_sale_amount,
+                    sm.invoice_date AS invoice_date,
+                    sm.invoice_no AS invoice_no,
+                    sm.customer_name AS customerr_name,
+                    sm.number,
+                    im.item_name,
+                    sd.qty,
+                    sd.price,
+                    sd.amount
+                FROM tbl_sale_mstr AS sm
+                JOIN tbl_sale_details AS sd ON sm.id = sd.sale_mstr_id
+                JOIN tbl_item_mstr AS im ON sd.item_id = im.id
+                WHERE sm.invoice_no = %s;
+        
+            """
+            with connection.cursor() as cursor:
+                    cursor.execute(sale_details, [invoice_no])
+                    sale_result = cursor.fetchall()
+            print(type(sale_result))
+            return render(request, 'sale_details_template.html', {'sale_details': sale_result})
             return HttpResponse("Sale done")
     else:
         form = SaleDetailsForm()
@@ -288,81 +296,540 @@ def sale_items(request):
     return render(request, 'sale_items_form.html', {'form': form, 'form1': form1})
 
 
-def datewise_report(request):
+# def datewise_report(request):
+#     start_date = request.GET.get('start_date')
+#     end_date = request.GET.get('end_date')
+#     # Define the SQL queries
+#     purchase_query = """
+#         SELECT
+#             im.item_name,
+#             SUM(pd.quantity) AS purchase_quantity,
+#             SUM(pd.amount) AS purchase_amount
+#         FROM tbl_purchase_mstr AS pm
+#         JOIN tbl_purchase_details AS pd ON pm.id = pd.purchase_master_id
+#         JOIN tbl_item_mstr AS im ON pd.item_id = im.id
+#         WHERE
+#             pm.invoice_date BETWEEN %s AND %s
+#         GROUP BY
+#             im.item_name;
+#     """
+
+#     sale_query = """
+#         SELECT
+#             im.item_name,
+#             SUM(sd.qty) AS sale_quantity,
+#             SUM(sm.total_amount) AS sale_amount
+#         FROM tbl_sale_mstr AS sm
+#         JOIN tbl_sale_details AS sd ON sm.id = sd.sale_mstr_id
+#         JOIN tbl_item_mstr AS im ON sd.item_id = im.id
+#         WHERE
+#             sm.invoice_date BETWEEN %s AND %s
+#         GROUP BY
+#             im.item_name;
+#     """
+
+#     # Execute the purchase SQL query
+#     with connection.cursor() as cursor:
+#         cursor.execute(purchase_query, [start_date, end_date])
+#         purchase_result = cursor.fetchall()
+
+#     # Execute the sale SQL query
+#     with connection.cursor() as cursor:
+#         cursor.execute(sale_query, [start_date, end_date])
+#         sale_result = cursor.fetchall()
+
+#     # Process the purchase result
+#     purchase_data = [{'item_name': row[0], 'purchase_quantity': row[1],
+#                        'purchase_amount': row[2]} for row in purchase_result]
+#     print(purchase_data)
+    
+#     # Process the sale result
+#     sale_data = [{'item_name': row[0], 'sale_quantity': row[1], 'sale_amount': row[2]} for row in sale_result]
+#     print(sale_data)
+
+#     datewise_report_data = {}
+#     for purchase_entry in purchase_data:
+#         item_name = purchase_entry['item_name']
+#         purchase_quantity = purchase_entry['purchase_quantity']
+#         purchase_amount = purchase_entry['purchase_amount']
+#         if item_name not in datewise_report_data:
+#             datewise_report_data[item_name] = {'purchase_quantity': 0, 'purchase_amount': Decimal('0.00'),
+#                                                'sale_quantity': 0, 'sale_amount': Decimal('0.00')}
+#         datewise_report_data[item_name]['purchase_quantity'] += purchase_quantity
+#         datewise_report_data[item_name]['purchase_amount'] += purchase_amount
+
+#     for sale_entry in sale_data:
+#         item_name = sale_entry['item_name']
+#         sale_quantity = sale_entry['sale_quantity']
+#         sale_amount = sale_entry['sale_amount']
+#         if item_name not in datewise_report_data:
+#             datewise_report_data[item_name] = {'purchase_quantity': 0, 'purchase_amount': Decimal('0.00'),
+#                                                'sale_quantity': 0, 'sale_amount': Decimal('0.00')}
+#         datewise_report_data[item_name]['sale_quantity'] += sale_quantity
+#         datewise_report_data[item_name]['sale_amount'] += sale_amount
+
+
+#     # Calculate stock quantity and profit/loss
+#     for item_name, data in datewise_report_data.items():
+#         data['stock_quantity'] = data['purchase_quantity'] - data['sale_quantity']
+#         data['profit_loss'] = data['sale_amount'] - data['purchase_amount']
+
+#     return render(request, 'date_wise_report.html', {'datewise_report_data': datewise_report_data})
+
+def purchase_records(request):
+    if request.method == 'GET':
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        # Define the SQL query to fetch distinct purchase records between two dates
+        sql_query = """
+            SELECT DISTINCT
+                pm.invoice_date AS invoice_date,
+                pm.invoice_no AS invoice_no,
+                sm.supplier_name AS supplier_name,
+                pm.id AS purchase_master_id
+            FROM tbl_purchase_mstr AS pm
+            JOIN tbl_supplier_mstr AS sm ON pm.supplier_id = sm.id
+            JOIN tbl_purchase_details AS pd ON pm.id = pd.purchase_master_id
+            WHERE pm.invoice_date BETWEEN %s AND %s;
+        """
+
+        # Execute the SQL query with the date range
+        with connection.cursor() as cursor:
+            cursor.execute(sql_query, [start_date, end_date])
+            distinct_purchase_records = cursor.fetchall()
+        print(distinct_purchase_records)
+
+        context = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'distinct_purchase_records': distinct_purchase_records,  
+        }
+        return render(request, 'purchase_records_by_date.html', context)
+    else:
+        return HttpResponseBadRequest("Invalid HTTP method. Please use GET.")
+
+
+def view_item_details(request, purchase_id):
+    sql_query = """
+        SELECT
+            pm.invoice_no AS invoice_no,
+            pm.invoice_date AS invoice_date,
+            sm.supplier_name AS supplier_name,
+            im.item_name AS item_name,
+            pd.price AS price,
+            pd.quantity AS quantity,
+            pd.amount AS amount
+        FROM
+            tbl_purchase_mstr AS pm
+        JOIN
+            tbl_supplier_mstr AS sm ON pm.supplier_id = sm.id
+        JOIN
+            tbl_purchase_details AS pd ON pm.id = pd.purchase_master_id
+        JOIN
+            tbl_item_mstr AS im ON pd.item_id = im.id
+        WHERE
+            pd.purchase_master_id = %s;
+    """
+    # Execute the SQL query with the provided purchase_id
+    with connection.cursor() as cursor:
+        cursor.execute(sql_query, [purchase_id])
+        item_details = cursor.fetchall()
+
+    # Calculate the total amount for the purchase
+    total_amount = sum(item[6] for item in item_details)  # Sum of amounts in the result
+
+    context = {
+        'item_details': item_details,
+        'total_amount': total_amount,
+    }
+    print(item_details)
+    print(total_amount)
+
+    # Render the item_details.html template with the context data
+    return render(request, 'purchase_item_details.html', context)
+
+def sale_records_within_date_range(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    # Define the SQL queries
-    purchase_query = """
-        SELECT
-            im.item_name,
-            SUM(pd.quantity) AS purchase_quantity,
-            SUM(pm.total_amount) AS purchase_amount
-        FROM tbl_purchase_mstr AS pm
-        JOIN tbl_purchase_details AS pd ON pm.id = pd.purchase_master_id
-        JOIN tbl_item_mstr AS im ON pd.item_id = im.id
-        WHERE
-            pm.invoice_date BETWEEN %s AND %s
-        GROUP BY
-            im.item_name;
+
+    # Define the SQL query to retrieve records within the date range
+    sql_query = """
+        SELECT DISTINCT
+                sm.invoice_date AS invoice_date ,sm.invoice_no AS invoice_no,
+                sm.customer_name AS customer_name,
+				sm.number AS customer_number,
+                sm.id AS sale_mstr_id
+                FROM tbl_sale_mstr AS sm
+                JOIN tbl_sale_details AS sd ON sm.id = sd.sale_mstr_id
+                WHERE sm.invoice_date between %s and %s
+        
     """
 
-    sale_query = """
+    # Execute the SQL query with the provided date range
+    with connection.cursor() as cursor:
+        cursor.execute(sql_query, [start_date, end_date])
+        records = cursor.fetchall()
+
+    context = {
+        'records': records,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+
+    return render(request, 'sale_records_within_date_range.html', context)
+
+def view_sale_item_details(request, sale_id):
+    # Get the purchase record using purchase_id
+    # Define the SQL query to fetch item details, supplier name, invoice number, and invoice date
+    sql_query = """
         SELECT
-            im.item_name,
-            SUM(sd.qty) AS sale_quantity,
-            SUM(sm.total_amount) AS sale_amount
-        FROM tbl_sale_mstr AS sm
-        JOIN tbl_sale_details AS sd ON sm.id = sd.sale_mstr_id
-        JOIN tbl_item_mstr AS im ON sd.item_id = im.id
-        WHERE
-            sm.invoice_date BETWEEN %s AND %s
-        GROUP BY
-            im.item_name;
-    """
-
-    # Execute the purchase SQL query
+             sm.invoice_date AS invoice_date,
+                sm.invoice_no AS invoice_no,
+                sm.customer_name AS customer_name,
+                sm.number AS customer_number,
+                sd.amount AS amount,
+                sd.price AS price,
+                sd.qty AS quantity,
+                im.item_name AS item_name
+            FROM
+                tbl_sale_mstr AS sm
+            JOIN
+                tbl_sale_details AS sd ON sm.id = sd.sale_mstr_id
+            JOIN
+                tbl_item_mstr AS im ON sd.item_id = im.id
+            WHERE
+            sd.sale_mstr_id = %s;
+                """
+    # Execute the SQL query with the provided purchase_id
     with connection.cursor() as cursor:
-        cursor.execute(purchase_query, [start_date, end_date])
-        purchase_result = cursor.fetchall()
+        cursor.execute(sql_query, [sale_id])
+        sale_item_details = cursor.fetchall()
 
-    # Execute the sale SQL query
+    # Calculate the total amount for the purchase
+    total_amount = sum(item[4] for item in sale_item_details)  # Sum of amounts in the result
+
+    context = {
+        'item_details': sale_item_details,
+        'total_amount': total_amount,
+    }
+    print(sale_item_details)
+    print(total_amount)
+
+    # Render the item_details.html template with the context data
+    return render(request, 'sale_item_details.html', context)
+
+def date_wise_item_report(request):
+    start_date = None
+    end_date = None
+
+    if request.method == "POST":
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+
+        # Validate that both start_date and end_date are provided
+        if not start_date or not end_date:
+            return HttpResponse("Please select both start date and end date.")
+
     with connection.cursor() as cursor:
-        cursor.execute(sale_query, [start_date, end_date])
-        sale_result = cursor.fetchall()
+        # Get a list of unique dates from both purchase and sale data
+        cursor.execute("""
+            SELECT DISTINCT pm.invoice_date
+            FROM tbl_purchase_mstr AS pm
+            WHERE pm.invoice_date BETWEEN %s AND %s
+        """, [start_date, end_date])
+        purchase_dates = [date[0] for date in cursor.fetchall()]
 
-    # Process the purchase result
-    purchase_data = [{'item_name': row[0], 'purchase_quantity': row[1],
-                       'purchase_amount': row[2]} for row in purchase_result]
-    print(purchase_data)
+        cursor.execute("""
+            SELECT DISTINCT sm.invoice_date
+            FROM tbl_sale_mstr AS sm
+            WHERE sm.invoice_date BETWEEN %s AND %s
+        """, [start_date, end_date])
+        sale_dates = [date[0] for date in cursor.fetchall()]
+
+        # Combine the unique dates
+        unique_dates = set(purchase_dates + sale_dates)
+
+        # Initialize the report data
+        report_data = []
+
+        # Iterate through the unique dates
+        for date in unique_dates:
+            cursor.execute("""
+                SELECT 
+                    pd.amount AS purchase_amount, pd.quantity AS purchase_quantity,
+                    im.item_name AS item_name
+                FROM tbl_item_mstr AS im 
+                JOIN tbl_purchase_details AS pd ON im.id = pd.item_id
+                JOIN tbl_purchase_mstr AS pm ON pm.id = pd.purchase_master_id
+                WHERE pm.invoice_date = %s
+            """, [date])
+            purchase_data = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT 
+                    sd.amount AS sale_amount, sd.qty AS sale_quantity,
+                    im.item_name AS item_name
+                FROM tbl_item_mstr AS im 
+                JOIN tbl_sale_details AS sd ON im.id = sd.item_id
+                JOIN tbl_sale_mstr AS sm ON sm.id = sd.sale_mstr_id
+                WHERE sm.invoice_date = %s
+            """, [date])
+            sale_data = cursor.fetchall()
+
+            # Create a dictionary to store summed values for each item
+            item_totals = {}
+
+            # Iterate through the purchase data for the current date
+            for purchase_item in purchase_data:
+                item_name = purchase_item[2]
+                purchase_quantity = purchase_item[1]
+                purchase_amount = purchase_item[0]
+
+                if item_name not in item_totals:
+                    item_totals[item_name] = {
+                        'date': date,
+                        'item_name': item_name,
+                        'purchase_quantity': purchase_quantity,
+                        'purchase_amount': purchase_amount,
+                        'sale_quantity': 0,
+                        'sale_amount': 0,
+                    }
+                else:
+                    item_totals[item_name]['purchase_quantity'] += purchase_quantity
+                    item_totals[item_name]['purchase_amount'] += purchase_amount
+
+            # Iterate through the sale data for the current date
+            for sale_item in sale_data:
+                item_name = sale_item[2]
+                sale_quantity = sale_item[1]
+                sale_amount = sale_item[0]
+
+                if item_name not in item_totals:
+                    item_totals[item_name] = {
+                        'date': date,
+                        'item_name': item_name,
+                        'purchase_quantity': 0,
+                        'purchase_amount': 0,
+                        'sale_quantity': sale_quantity,
+                        'sale_amount': sale_amount,
+                    }
+                else:
+                    item_totals[item_name]['sale_quantity'] += sale_quantity
+                    item_totals[item_name]['sale_amount'] += sale_amount
+
+            # Calculate profit for each item and add it to the report data
+            for item_name, item_data in item_totals.items():
+                purchase_amount = item_data['purchase_amount']
+                sale_amount = item_data['sale_amount']
+                profit = sale_amount - purchase_amount
+                item_data['profit'] = profit
+                report_data.append(item_data)
+
+    context = {
+        'report_data': report_data,
+        'start_date': start_date,
+        'end_date': end_date,
+    }
+
+    return render(request, 'date_wise_item_report.html', context)
+
+def profit_loss_report(request):
+    # Retrieve all sales and purchase data
+    sales = SaleMaster.objects.all()
+    purchases = PurchaseMaster.objects.all()
+
+    # Calculate total revenue
+    total_sale_amount = sum(sale.total_amount for sale in sales)
+
+    # Calculate total expenses
+    total_purchase_amount = sum(purchase.total_amount for purchase in purchases)
+
+    # Calculate profit or loss
+    profit_or_loss = total_sale_amount - total_purchase_amount
     
-    # Process the sale result
-    sale_data = [{'item_name': row[0], 'sale_quantity': row[1], 'sale_amount': row[2]} for row in sale_result]
-    print(sale_data)
 
-    datewise_report_data = {}
-    for purchase_entry in purchase_data:
-        item_name = purchase_entry['item_name']
-        purchase_quantity = purchase_entry['purchase_quantity']
-        purchase_amount = purchase_entry['purchase_amount']
-        if item_name not in datewise_report_data:
-            datewise_report_data[item_name] = {'purchase_quantity': 0, 'purchase_amount': Decimal('0.00'),
-                                               'sale_quantity': 0, 'sale_amount': Decimal('0.00')}
-        datewise_report_data[item_name]['purchase_quantity'] += purchase_quantity
-        datewise_report_data[item_name]['purchase_amount'] += purchase_amount
+    context = {
+        'total_sale_amount': total_sale_amount,
+        'total_purchase_amount': total_purchase_amount,
+        'profit_or_loss': profit_or_loss,
+    }
 
-    for sale_entry in sale_data:
-        item_name = sale_entry['item_name']
-        sale_quantity = sale_entry['sale_quantity']
-        sale_amount = sale_entry['sale_amount']
-        if item_name not in datewise_report_data:
-            datewise_report_data[item_name] = {'purchase_quantity': 0, 'purchase_amount': Decimal('0.00'),
-                                               'sale_quantity': 0, 'sale_amount': Decimal('0.00')}
-        datewise_report_data[item_name]['sale_quantity'] += sale_quantity
-        datewise_report_data[item_name]['sale_amount'] += sale_amount
+    return render(request, 'profit_loss_report.html', context)
 
-    # Calculate stock quantity and profit/loss
-    for item_name, data in datewise_report_data.items():
-        data['stock_quantity'] = data['purchase_quantity'] - data['sale_quantity']
-        data['profit_loss'] = data['sale_amount'] - data['purchase_amount']
 
-    return render(request, 'date_wise_report.html', {'datewise_report_data': datewise_report_data})
+def date_wise_profit_loss_report(request):
+    if request.method == 'POST':
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        # Query the database to calculate total sale and purchase amounts
+        total_sale_amount = SaleMaster.objects.filter(date__range=[start_date, end_date]).aggregate(
+            total_sale_amount=models.Sum('amount'))['total_sale_amount'] or 0
+        total_purchase_amount = PurchaseMaster.objects.filter(date__range=[start_date, end_date]).aggregate(
+            total_purchase_amount=models.Sum('amount'))['total_purchase_amount'] or 0
+
+        profit_or_loss = total_sale_amount - total_purchase_amount
+
+        context = {
+            'total_sale_amount': total_sale_amount,
+            'total_purchase_amount': total_purchase_amount,
+            'profit_or_loss': profit_or_loss,
+        }
+
+        return render(request, 'date_wise_profit_loss_report.html', context)
+
+    return render(request, 'date_wise_profit_loss_report.html')
+
+
+#stock report item wise
+def item_stock_report(request):
+    if request.method == 'GET':
+        # Fetch item names from the database
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT item_name FROM tbl_item_mstr;")
+            item_names = [row[0] for row in cursor.fetchall()]
+
+        # Get the selected item name from the form
+        item_name = request.GET.get('item_name', item_names[0] if item_names else '')  # Default to the first item if available
+
+        # Fetch stock data for the selected item name
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                WITH sales_data AS (
+                    SELECT
+                        sd.item_id,
+                        SUM(sd.qty) AS sale_quantity
+                    FROM tbl_sale_details AS sd
+                    GROUP BY sd.item_id
+                ),
+                purchase_data AS (
+                    SELECT
+                        pd.item_id,
+                        SUM(pd.quantity) AS purchase_quantity
+                    FROM tbl_purchase_details AS pd
+                    GROUP BY pd.item_id
+                ),
+                item_master AS (
+                    SELECT
+                        im.id AS item_id,
+                        im.item_name
+                    FROM tbl_item_mstr AS im
+                )
+                SELECT
+                    item_master.item_name,
+                    COALESCE(purchase_quantity, 0) AS purchase_quantity,
+                    COALESCE(sale_quantity, 0) AS sale_quantity,
+                    (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
+                FROM item_master
+                LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
+                LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
+                WHERE item_name = %s
+                ORDER BY item_master.item_name;
+            """, [item_name])
+            stock_data = cursor.fetchall()
+
+        context = {
+            'item_names': item_names,
+            'item_name': item_name,
+            'stock_data': stock_data,
+        }
+        return render(request, 'stock_item_report.html', context)
+    else:
+        return HttpResponseBadRequest("Invalid HTTP method. Please use GET.")
+    
+#All items Stcok report
+def  all_item_stock_report(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH sales_data AS (
+                SELECT
+                    sd.item_id,
+                    SUM(sd.qty) AS sale_quantity
+                FROM tbl_sale_details AS sd
+                GROUP BY sd.item_id
+            ),
+            purchase_data AS (
+                SELECT
+                    pd.item_id,
+                    SUM(pd.quantity) AS purchase_quantity
+                FROM tbl_purchase_details AS pd
+                GROUP BY pd.item_id
+            ),
+            item_master AS (
+                SELECT
+                    im.id AS item_id,
+                    im.item_name
+                FROM tbl_item_mstr AS im
+            )
+            SELECT
+                item_master.item_name,
+                COALESCE(purchase_quantity, 0) AS purchase_quantity,
+                COALESCE(sale_quantity, 0) AS sale_quantity,
+                (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
+            FROM item_master
+            LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
+            LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
+            ORDER BY item_master.item_name;
+        """)
+        stock_data = cursor.fetchall()
+
+    context = {
+        'stock_data': stock_data,
+    }
+    return render(request, 'all_item_stock_report.html', context)
+
+#date profit sale record
+
+from django.db import connection
+from django.shortcuts import render
+
+def invoice_report(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            WITH sales_data AS (
+                SELECT
+                    DATE(invoice_date) AS transaction_date,
+                    SUM(total_amount) AS sale_amount
+                FROM tbl_sale_mstr
+                GROUP BY DATE(invoice_date)
+            ),
+            purchase_data AS (
+                SELECT
+                    DATE(invoice_date) AS transaction_date,
+                    SUM(total_amount) AS purchase_amount
+                FROM tbl_purchase_mstr
+                GROUP BY DATE(invoice_date)
+            )
+            SELECT
+                COALESCE(sales_data.transaction_date, purchase_data.transaction_date) AS transaction_date,
+                COALESCE(sale_amount, 0) AS sale_amount,
+                COALESCE(purchase_amount, 0) AS purchase_amount,
+                (COALESCE(sale_amount, 0) - COALESCE(purchase_amount, 0)) AS profit_or_loss
+            FROM sales_data
+            FULL OUTER JOIN purchase_data
+            ON sales_data.transaction_date = purchase_data.transaction_date
+            ORDER BY COALESCE(sales_data.transaction_date, purchase_data.transaction_date);
+        """)
+        result = cursor.fetchall()
+
+    # Calculate the sum of sale amount, purchase amount, and profit/loss
+    sum_sale_amount = sum(row[1] for row in result)
+    sum_purchase_amount = sum(row[2] for row in result)
+    sum_profit_loss = sum(row[3] for row in result)
+
+    context = {
+        'report_data': result,
+        'sum_sale_amount': sum_sale_amount,
+        'sum_purchase_amount': sum_purchase_amount,
+        'sum_profit_loss': sum_profit_loss,
+    }
+    return render(request, 'invoice_report.html', context)
+
+
+
+
+
+
+
+
+

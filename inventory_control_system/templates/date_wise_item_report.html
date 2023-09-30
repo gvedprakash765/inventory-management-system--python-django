@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date-wise Item Report</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+    {% include 'home.html' %}
+    <div class="container mt-4">
+        <h1 class="text-center">Date-wise Item Report</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-row" style="margin-left: 133px;">
+                <div class="form-group col-md-4">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date">
+                </div>
+                <div class="form-group col-md-4">
+                    <button type="submit" class="btn btn-primary" style="margin-top: 32px;">Generate Report</button>
+                </div>
+            </div>
+        </form>
+        
+        <hr>
+        {% if start_date and end_date %}
+        <h2 class="text-center">Reports from {{start_date}} to {{ end_date }} </h2>
+        {% endif %}
+        <hr>
+        {% if report_data %}
+        <table class="table table-bordered">
+
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Item Name</th>
+                    <th>Purchase Quantity</th>
+                    <th>Purchase Amount</th>
+                    <th>Sale Quantity</th>
+                    <th>Sale Amount</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report_data %}
+                <tr>
+                    <td>{{ row.date }}</td>
+                    <td>{{ row.item_name }}</td>
+                    <td>{{ row.purchase_quantity }}</td>
+                    <td>{{ row.purchase_amount }}</td>
+                    <td>{{ row.sale_quantity }}</td>
+                    <td>{{ row.sale_amount }}</td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% else %}
+        <p class="text-center">No data available.</p>
+        {% endif %}
+    </div>
+</body>
+
+</html>

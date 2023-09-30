@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Profit and Loss Report</title>
+    <!-- Add any CSS styling or external stylesheets here -->
+    <style>
+        /* Add your CSS styles here */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        div {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h2 {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        strong {
+            font-weight: bold;
+            color: #007bff; /* Blue color for strong text */
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'home.html' %}
+    <h1 style="text-align: center;">Profit and Loss Report Till Now</h1>
+
+    <div style="align-items: center;">
+        <h2>Total Sale Amount : <strong>{{ total_sale_amount }}</strong></h2>
+        <h2>Total Purchase Amount: <strong>{{ total_purchase_amount }}</strong></h2>
+        <h2>Profit or Loss: <strong>{{ profit_or_loss }}</strong></h2>
+    </div>
+
+    <!-- You can format and style the report as needed -->
+</body>
+
+</html>

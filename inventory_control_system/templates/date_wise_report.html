@@ -5,7 +5,7 @@
     <title>Date-wise Report</title>
     <!-- Add Bootstrap CSS link -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    
+
     <style>
         /* Custom CSS */
         body {
@@ -24,7 +24,8 @@
             margin-top: 20px;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px;
             text-align: center;
             vertical-align: middle;
@@ -69,8 +70,12 @@
 </head>
 
 <body>
+    {% include 'home.html' %}
     <h1>Date-wise Report</h1>
-    <a href="{% url 'home_page' %}" class="btn btn-primary">Home</a>
+    <!-- {% if error_message %}
+    <p class="error">{{ error_message }}</p>
+    {% endif %} -->
+    
 
     <form method="GET" action="{% url 'datewise_report' %}">
         <div class="form-group">
@@ -113,8 +118,7 @@
         </table>
     </div>
 
-    <!-- Add Bootstrap JavaScript link (if needed) -->
-    <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->
+
 </body>
 
 </html>
