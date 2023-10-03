@@ -13,8 +13,6 @@ urlpatterns = [
     path('sale-items/', views.sale_items, name='sale_items'),
     path('get_item_price/', views.get_item_price, name='get_item_price'),
     path('get_item_details/', views.get_item_details, name='get_item_details'),
-    # path('datewise_report/', views.datewise_report, name='datewise_report'),
-    # path('item-wise-_stock_report/', views.item_wise_report, name='item_wise_report'),
     re_path(r'^purchase_records/(?P<selected_date>\d{4}-\d{2}-\d{2})/(?P<purchase_id>\d+)/$', 
              views.purchase_records, name='purchase_records'),  
     path('purchase_records/', views.purchase_records, name='purchase_records'),
@@ -27,9 +25,5 @@ urlpatterns = [
     path('item_stock_report/', views.item_stock_report,name='item_stock_report'),
     path('all_item_stock_report/', views.all_item_stock_report,name='all_item_stock_report'),
     path('invoice-report/', views.invoice_report, name='invoice_report'),
-
-
-
-
 ]
 

@@ -1,20 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice Report</title>
     <!-- Include Bootstrap CSS or other styling if desired -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        /* Add custom CSS styles here if needed */
-    </style>
 </head>
+
 <body>
     {% include 'home.html' %}
-    <div class="container">
-        <h1 class="mt-4" style="text-align: center;">Date Wise Sale/Purchase Report</h1>
-        <table class="table table-bordered mt-4">
+    <div class="container mt-4">
+        <h1 class="text-center">Date-wise Sale/Purchase Report</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-row" style="margin-left: 133px;">
+                <div class="form-group col-md-4">
+                    <label for="start_date">Start Date:</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="end_date">End Date:</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date">
+                </div>
+                <div class="form-group col-md-4">
+                    <button type="submit" class="btn btn-primary" style="margin-top: 32px;">Generate Report</button>
+                </div>
+            </div>
+        </form>
+        <hr>
+        {% if start_date and end_date %}
+        <h2 class="text-center">Reports from {{start_date}} to {{ end_date }} </h2>
+        {% endif %}
+        <hr>
+        {% if report_data %}
+        <table class="table table-bordered">
             <thead>
                 <tr>
                     <th>Transaction Date</th>
@@ -41,6 +63,10 @@
                 </tr>
             </tbody>
         </table>
+        {% else %}
+        <p class="text-center">No data available.</p>
+        {% endif %}
     </div>
 </body>
+
 </html>
