@@ -350,14 +350,17 @@ def view_item_details(request, purchase_id):
         item_details = cursor.fetchall()
 
     # Calculate the total amount for the purchase
-    total_amount = sum(item[6] for item in item_details)  # Sum of amounts in the result
+    total_amount = sum(item[6] for item in item_details) 
+    total_qty = sum(item[5] for item in item_details)  
 
     context = {
         'item_details': item_details,
         'total_amount': total_amount,
     }
-    print(item_details)
+    print('hello')
+    print(type(item_details))
     print(total_amount)
+    print(total_qty)
 
     # Render the item_details.html template with the context data
     return render(request, 'purchase_item_details.html', context)
@@ -389,12 +392,10 @@ def sale_records_within_date_range(request):
         'start_date': start_date,
         'end_date': end_date,
     }
-
     return render(request, 'sale_records_within_date_range.html', context)
 
 def view_sale_item_details(request, sale_id):
     # Get the purchase record using purchase_id
-    # Define the SQL query to fetch item details, supplier name, invoice number, and invoice date
     sql_query = """
         SELECT
              sm.invoice_date AS invoice_date,
@@ -475,7 +476,7 @@ def date_wise_item_report(request):
                 FROM tbl_item_mstr AS im 
                 JOIN tbl_purchase_details AS pd ON im.id = pd.item_id
                 JOIN tbl_purchase_mstr AS pm ON pm.id = pd.purchase_master_id
-                WHERE pm.invoice_date = %s
+                WHERE pm.invoice_date = %s Order by pm.invoice_date asc
             """, [date])
             purchase_data = cursor.fetchall()
 
@@ -486,7 +487,7 @@ def date_wise_item_report(request):
                 FROM tbl_item_mstr AS im 
                 JOIN tbl_sale_details AS sd ON im.id = sd.item_id
                 JOIN tbl_sale_mstr AS sm ON sm.id = sd.sale_mstr_id
-                WHERE sm.invoice_date = %s
+                WHERE sm.invoice_date = %s  Order by sm.invoice_date asc
             """, [date])
             sale_data = cursor.fetchall()
 
@@ -596,6 +597,62 @@ def date_wise_profit_loss_report(request):
 
 
 #stock report item wise
+# def item_stock_report(request):
+#     if request.method == 'GET':
+#         # Fetch item names from the database
+#         with connection.cursor() as cursor:
+#             cursor.execute("SELECT item_name FROM tbl_item_mstr;")
+#             item_names = [row[0] for row in cursor.fetchall()]
+
+#         # Get the selected item name from the form
+#         item_name = request.GET.get('item_name', item_names[0] if item_names else '')  # Default to the first item if available
+
+#         # Fetch stock data for the selected item name
+#         with connection.cursor() as cursor:
+#             cursor.execute("""
+#                 WITH sales_data AS (
+#                     SELECT
+#                         sd.item_id,
+#                         SUM(sd.qty) AS sale_quantity
+#                     FROM tbl_sale_details AS sd
+#                     GROUP BY sd.item_id
+#                 ),
+#                 purchase_data AS (
+#                     SELECT
+#                         pd.item_id,
+#                         SUM(pd.quantity) AS purchase_quantity
+#                     FROM tbl_purchase_details AS pd
+#                     GROUP BY pd.item_id
+#                 ),
+#                 item_master AS (
+#                     SELECT
+#                         im.id AS item_id,
+#                         im.item_name
+#                     FROM tbl_item_mstr AS im
+#                 )
+#                 SELECT
+#                     item_master.item_name,
+#                     COALESCE(purchase_quantity, 0) AS purchase_quantity,
+#                     COALESCE(sale_quantity, 0) AS sale_quantity,
+#                     (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
+#                 FROM item_master
+#                 LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
+#                 LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
+#                 WHERE item_name = %s
+#                 ORDER BY item_master.item_name;
+#             """, [item_name])
+#             stock_data = cursor.fetchall()
+
+#         context = {
+#             'item_names': item_names,
+#             'item_name': item_name,
+#             'stock_data': stock_data,
+#         }
+#         return render(request, 'stock_item_report.html', context)
+#     else:
+#         return HttpResponseBadRequest("NOT FOUND")
+
+
 def item_stock_report(request):
     if request.method == 'GET':
         # Fetch item names from the database
@@ -604,9 +661,107 @@ def item_stock_report(request):
             item_names = [row[0] for row in cursor.fetchall()]
 
         # Get the selected item name from the form
-        item_name = request.GET.get('item_name', item_names[0] if item_names else '')  # Default to the first item if available
+        item_name = request.GET.get('item_name', item_names[0] if item_names else '')
+          # Default to the first item if available
+        if not item_name:
+            return HttpResponse("<h1>Please select an item.</h1>")
 
-        # Fetch stock data for the selected item name
+        # Fetch stock data
+        with connection.cursor() as cursor:
+            if item_name == "All Items":
+                # Query to fetch stock data for all items
+                cursor.execute("""
+                    WITH sales_data AS (
+                    SELECT
+                        sd.item_id,
+                        SUM(sd.qty) AS sale_quantity
+                    FROM tbl_sale_details AS sd
+                    GROUP BY sd.item_id
+                ),
+                purchase_data AS (
+                    SELECT
+                        pd.item_id,
+                        SUM(pd.quantity) AS purchase_quantity
+                    FROM tbl_purchase_details AS pd
+                    GROUP BY pd.item_id
+                ),
+                item_master AS (
+                    SELECT
+                        im.id AS item_id,
+                        im.item_name
+                    FROM tbl_item_mstr AS im
+                )
+                SELECT
+                    item_master.item_name,
+                    COALESCE(purchase_quantity, 0) AS purchase_quantity,
+                    COALESCE(sale_quantity, 0) AS sale_quantity,
+                    (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
+                FROM item_master
+                LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
+                LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
+                ORDER BY item_master.item_name;
+                """)
+            else:
+                # Query to fetch stock data for a specific item
+                cursor.execute("""
+                    WITH sales_data AS (
+                    SELECT
+                        sd.item_id,
+                        SUM(sd.qty) AS sale_quantity
+                    FROM tbl_sale_details AS sd
+                    GROUP BY sd.item_id
+                ),
+                purchase_data AS (
+                    SELECT
+                        pd.item_id,
+                        SUM(pd.quantity) AS purchase_quantity
+                    FROM tbl_purchase_details AS pd
+                    GROUP BY pd.item_id
+                ),
+                item_master AS (
+                    SELECT
+                        im.id AS item_id,
+                        im.item_name
+                    FROM tbl_item_mstr AS im
+                )
+                SELECT
+                    item_master.item_name,
+                    COALESCE(purchase_quantity, 0) AS purchase_quantity,
+                    COALESCE(sale_quantity, 0) AS sale_quantity,
+                    (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
+                FROM item_master
+                LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
+                LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
+                WHERE item_name = %s
+                ORDER BY item_master.item_name;
+                """, [item_name])
+                
+            stock_data = cursor.fetchall()
+
+        context = {
+            'item_names': item_names,
+            'item_name': item_name,
+            'stock_data': stock_data,
+        }
+        return render(request, 'stock_item_report.html', context)
+    else:
+        return HttpResponseBadRequest("NOT FOUND")
+
+    
+#All items Stcok report
+def all_item_stock_report(request):
+    if request.method == 'GET':
+        # Fetch item names from the database
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT item_name FROM tbl_item_mstr;")
+            item_names = [row[0] for row in cursor.fetchall()]
+
+        # Get the selected item name from the form
+        item_name = request.GET.get('item_name', item_names[0] if item_names else '')
+        print(item_name)
+          # Default to the first item if available
+
+        # Rest of your code for fetching stock data remains the same
         with connection.cursor() as cursor:
             cursor.execute("""
                 WITH sales_data AS (
@@ -637,9 +792,8 @@ def item_stock_report(request):
                 FROM item_master
                 LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
                 LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
-                WHERE item_name = %s
                 ORDER BY item_master.item_name;
-            """, [item_name])
+            """)
             stock_data = cursor.fetchall()
 
         context = {
@@ -647,50 +801,9 @@ def item_stock_report(request):
             'item_name': item_name,
             'stock_data': stock_data,
         }
-        return render(request, 'stock_item_report.html', context)
+        return render(request, 'all_item_stock_report.html', context)
     else:
         return HttpResponseBadRequest("NOT FOUND")
-    
-#All items Stcok report
-def  all_item_stock_report(request):
-    with connection.cursor() as cursor:
-        cursor.execute("""
-            WITH sales_data AS (
-                SELECT
-                    sd.item_id,
-                    SUM(sd.qty) AS sale_quantity
-                FROM tbl_sale_details AS sd
-                GROUP BY sd.item_id
-            ),
-            purchase_data AS (
-                SELECT
-                    pd.item_id,
-                    SUM(pd.quantity) AS purchase_quantity
-                FROM tbl_purchase_details AS pd
-                GROUP BY pd.item_id
-            ),
-            item_master AS (
-                SELECT
-                    im.id AS item_id,
-                    im.item_name
-                FROM tbl_item_mstr AS im
-            )
-            SELECT
-                item_master.item_name,
-                COALESCE(purchase_quantity, 0) AS purchase_quantity,
-                COALESCE(sale_quantity, 0) AS sale_quantity,
-                (COALESCE(purchase_quantity, 0) - COALESCE(sale_quantity, 0)) AS stock
-            FROM item_master
-            LEFT JOIN purchase_data ON item_master.item_id = purchase_data.item_id
-            LEFT JOIN sales_data ON item_master.item_id = sales_data.item_id
-            ORDER BY item_master.item_name;
-        """)
-        stock_data = cursor.fetchall()
-
-    context = {
-        'stock_data': stock_data,
-    }
-    return render(request, 'all_item_stock_report.html', context)
 
 #date profit sale
 def invoice_report(request):
@@ -748,16 +861,3 @@ def invoice_report(request):
         return render(request, 'invoice_report.html', context)
 
     return render(request, 'invoice_report.html')
-
-
-
-
-
-
-
-
-
-
-
-
-

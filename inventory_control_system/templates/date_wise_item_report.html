@@ -30,12 +30,14 @@
             </div>
         </form>
         
+        
+        <hr>
+        
+        {% if report_data %}
         <hr>
         {% if start_date and end_date %}
         <h2 class="text-center">Reports from {{start_date}} to {{ end_date }} </h2>
         {% endif %}
-        <hr>
-        {% if report_data %}
         <table class="table table-bordered">
 
             <thead>

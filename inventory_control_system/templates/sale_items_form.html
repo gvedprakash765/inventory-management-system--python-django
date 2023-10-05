@@ -83,14 +83,14 @@
 
     <div class="col-md-10 text-right">
         <b><label for="total_cart_amount" class="form-label">Total Cart Amount:</label></b>
-       <b><span id="total_cart_amount">0.00</span></b>
+        <b><span id="total_cart_amount">0.00</span></b>
     </div>
 
     <!-- Submit Cart Button -->
     <div id="submit-cart-button" class="text-center">
         <button type="button" class="btn btn-primary" id="submit-cart">Place Order</button>
     </div>
-</div>
+    </div>
 
     <!-- JavaScript to handle price, amount, and purchase quantity calculation -->
     <script>
@@ -195,7 +195,7 @@
                 } else {
                     // Display a message indicating insufficient quantity
                     alert("Insufficient quantity for the selected item and stocked qty is : " + purchaseQuantity);
-                
+
                 }
             });
 
@@ -217,7 +217,7 @@
 
             // Add event listener to the "Submit Cart" button to submit the form
             $("#submit-cart").on('click', function () {
-                
+
                 // Update the hidden fields with cart data here if needed
                 // For example, you can update the item_list_input and total_amount fields
 
@@ -226,6 +226,7 @@
             });
         });
     </script>
+
 </body>
 
 </html>

@@ -10,6 +10,22 @@
 </head>
 <body>
     {% include 'home.html' %}
+    <div class="container text-center my-4">
+        <form action="{% url 'item_stock_report' %}" method="get" class="form-inline justify-content-center">
+            <div class="form-group mx-sm-3 mb-2">
+                <label for="itemSelect" class="sr-only">Item:</label>
+                <select id="itemSelect" name="item_name" class="form-control">
+                    <option value="">Select Item</option>
+                    
+                    {% for item in item_names %}
+                        <option value="{{ item }}" {% if item == selected_item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                    
+                </select>
+                
+            </div>
+            <button type="submit" class="btn btn-primary mb-2">Submit</button>
+        </form>
     <div class="container">
         <h1 class="mt-4" style="text-align: center;">All Items Stock Report</h1>
         <table class="table table-bordered mt-4">
@@ -19,7 +35,7 @@
                     <th>Purchase Quantity</th>
                     <th>Sale Quantity</th>
                     <th>Stock</th>
-                    <th>Action</th>
+
                 </tr>
             </thead>
             <tbody>
@@ -29,11 +45,11 @@
                     <td>{{ item.1 }}</td>
                     <td>{{ item.2 }}</td>
                     <td>{{ item.3 }}</td>
-                    <td><a href="{% url 'item_stock_report'%}">Back</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        
     </div>
 </body>
 </html>
