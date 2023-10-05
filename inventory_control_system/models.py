@@ -13,8 +13,7 @@ class ItemMaster(models.Model):
         db_table ='tbl_item_mstr'
     def __str__(self):
         return self.item_name
-        return f"{self.item_name} - {self.id}" 
-
+    
 class Supplier(models.Model):
     id = models.AutoField(primary_key=True)
     supplier_name = models.CharField(max_length=255)
@@ -41,8 +40,8 @@ class PurchaseMaster(models.Model):
     class Meta():
         db_table='tbl_purchase_mstr'
 
-    def __str__(self):
-        return self.invoice_no
+    # def __str__(self):
+    #     return self.invoice_no
     
 
 class PurchaseDetail(models.Model):
@@ -73,8 +72,8 @@ class SaleMaster(models.Model):
 
     class Meta():
         db_table='tbl_sale_mstr'
-    def __str__(self):
-        return self.invoice_no
+    # def __str__(self):
+    #     return self.invoice_no
 
 class SaleDetails(models.Model):
     id = models.AutoField(primary_key=True)
@@ -88,5 +87,3 @@ class SaleDetails(models.Model):
 
     class Meta():
         db_table='tbl_sale_details'
-
-    

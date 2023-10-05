@@ -182,6 +182,7 @@ def purchase_items(request):
                     total_amount=total_amount,
                     supplier=Supplier.objects.get(id=supplier_id)
                 )
+                print(purchase_master)
                 # Parse the JSON item list
                 item_list_json = request.POST.get('item_list')
                 item_list = json.loads(item_list_json)
@@ -299,6 +300,7 @@ def purchase_records(request):
             SELECT DISTINCT
                 pm.invoice_date AS invoice_date,
                 pm.invoice_no AS invoice_no,
+                pm.total_amount AS total_amount,
                 sm.supplier_name AS supplier_name,
                 pm.id AS purchase_master_id
             FROM tbl_purchase_mstr AS pm
@@ -373,6 +375,7 @@ def sale_records_within_date_range(request):
     sql_query = """
         SELECT DISTINCT
                 sm.invoice_date AS invoice_date ,sm.invoice_no AS invoice_no,
+                sm.total_amount AS total_amount,
                 sm.customer_name AS customer_name,
 				sm.number AS customer_number,
                 sm.id AS sale_mstr_id
@@ -463,11 +466,7 @@ def date_wise_item_report(request):
 
         # Combine the unique dates
         unique_dates = set(purchase_dates + sale_dates)
-
-        # Initialize the report data
         report_data = []
-
-        # Iterate through the unique dates
         for date in unique_dates:
             cursor.execute("""
                 SELECT 
